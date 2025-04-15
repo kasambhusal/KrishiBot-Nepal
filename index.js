@@ -4,11 +4,10 @@ const axios = require("axios");
 const app = express();
 app.use(bodyParser.json());
 
-const PAGE_ACCESS_TOKEN =
-  "EAAQmVsZCBgI4BO77sVs1wAuXZAGyoMArO7QxrGEFCdQHIA1jVwovpruCmSDvvyseES88anuDNWskzWGzqTvhzZBEo8w4dU4mye4cZCNt7YCEsDnsw9JwnB0ZBBw308sb68GZB4CpbE93QADJeHsMJBdELSJPTZAcmZAMLzFoDxvVBej5ECn1xcOw3xSCVcvlho0asgZDZD";
+const PAGE_ACCESS_TOKEN = process.env.PAGE_ACCESS_TOKEN;
 
 app.get("/webhook", (req, res) => {
-  const VERIFY_TOKEN = "verify_me_kasam";
+  const VERIFY_TOKEN = process.env.VERIFY_TOKEN;
   if (req.query["hub.verify_token"] === VERIFY_TOKEN) {
     res.send(req.query["hub.challenge"]);
   } else {
@@ -56,7 +55,7 @@ async function askAI(msg) {
   const res = await axios.post(
     "https://api-inference.huggingface.co/models/mrm8488/t5-base-finetuned-question-generation-ap",
     { inputs: msg },
-    { headers: { Authorization: "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" } }
+    { headers: { Authorization: process.env.HUGGING_FACE } }
   );
   return (
     res.data[0]?.generated_text ||
