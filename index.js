@@ -62,15 +62,26 @@ async function getWeather(location) {
 }
 
 async function askAI(msg) {
-  const res = await axios.post(
-    "https://api-inference.huggingface.co/models/google/flan-t5-base",
-    { inputs: msg },
-    { headers: { Authorization: `Bearer ${process.env.HUGGING_FACE}` } }
-  );
-  return (
-    res.data[0]?.generated_text ||
-    "माफ गर्नुहोस्, म बुझिनँ। कृपया फेरि सोध्नुहोस्।"
-  );
+  try {
+    const response = await axios.post(
+      "https://api-inference.huggingface.co/models/google/flan-t5-base",
+      { inputs: msg },
+      {
+        headers: {
+          Authorization: `Bearer ${process.env.HUGGING_FACE}`,
+        },
+      }
+    );
+
+    return (
+      response.data?.[0]?.generated_text ||
+      "माफ गर्नुहोस्, म बुझिनँ। कृपया फेरि सोध्नुहोस्।"
+    );
+  } catch (error) {
+    console.error("❌ HuggingFace error:", error.response?.data || error.message);
+    return "माफ गर्नुहोस्, केही समस्या आयो।";
+  }
 }
+
 
 app.listen(3000, () => console.log("Bot is live on port 3000"));
