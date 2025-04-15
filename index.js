@@ -15,24 +15,35 @@ app.get("/webhook", (req, res) => {
   }
 });
 
+async function getAgricultureReply(userText) {
+  // example for testing only
+  return `You asked: ${userText}. I’ll get back to you soon.`;
+}
+
+// NEW version with AI logic
 app.post("/webhook", async (req, res) => {
-  const entry = req.body.entry[0];
-  const event = entry.messaging[0];
-  const senderId = event.sender.id;
-  const message = event.message?.text;
+  const body = req.body;
 
-  if (message) {
-    const response = await getBotReply(message);
-    await axios.post(
-      `https://graph.facebook.com/v18.0/me/messages?access_token=${PAGE_ACCESS_TOKEN}`,
-      {
-        recipient: { id: senderId },
-        message: { text: response },
+  if (body.object === "page") {
+    for (const entry of body.entry) {
+      const webhook_event = entry.messaging[0];
+      const sender_psid = webhook_event.sender.id;
+
+      if (webhook_event.message && webhook_event.message.text) {
+        const userMessage = webhook_event.message.text;
+
+        // Process message with AI (translate, etc.)
+        const aiReply = await getBotReply(userMessage);
+
+        // Send response
+        callSendAPI(sender_psid, aiReply);
       }
-    );
-  }
+    }
 
-  res.sendStatus(200);
+    res.status(200).send("EVENT_RECEIVED");
+  } else {
+    res.sendStatus(404);
+  }
 });
 
 async function getBotReply(msg) {
@@ -51,11 +62,10 @@ async function getWeather(location) {
 }
 
 async function askAI(msg) {
-  // Simple NLP from HuggingFace
   const res = await axios.post(
-    "https://api-inference.huggingface.co/models/mrm8488/t5-base-finetuned-question-generation-ap",
+    "https://api-inference.huggingface.co/models/google/flan-t5-base",
     { inputs: msg },
-    { headers: { Authorization: process.env.HUGGING_FACE } }
+    { headers: { Authorization: `Bearer ${process.env.HUGGING_FACE}` } }
   );
   return (
     res.data[0]?.generated_text ||
